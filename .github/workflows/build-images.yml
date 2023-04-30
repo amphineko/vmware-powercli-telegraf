@@ -28,7 +28,7 @@ jobs:
       
       # collector
       
-      - name: Docker Metadata
+      - name: "Docker Metadata: collector"
         id: meta_collector
         uses: docker/metadata-action@e5622373a38e60fb6d795a4421e56882f2d7a681
         with:
@@ -36,9 +36,8 @@ jobs:
             ghcr.io/amphineko/vmware-powercli-telegraf
           flavor: |
             latest=auto
-            prefix=collector
           tags: |
-            type=sha
+            type=sha,prefix=collector-sha-
 
       - name: "Docker Build and Push: collector"
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
@@ -50,7 +49,7 @@ jobs:
           
       # telegraf
           
-      - name: Docker Metadata
+      - name: "Docker Metadata: telegraf"
         id: meta_telegraf
         uses: docker/metadata-action@e5622373a38e60fb6d795a4421e56882f2d7a681
         with:
@@ -60,7 +59,7 @@ jobs:
             latest=auto
             prefix=telegraf
           tags: |
-            type=sha
+            type=sha,prefix=telegraf-sha-
           
       - name: "Docker Build and Push: telegraf"
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
