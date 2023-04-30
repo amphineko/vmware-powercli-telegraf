@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master
-      - 'bump-*'
-    tags:
-      - 'v*.*.*'
   workflow_dispatch:
 
 jobs:
@@ -22,38 +19,53 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Docker Metadata
-        id: meta
-        uses: docker/metadata-action@e5622373a38e60fb6d795a4421e56882f2d7a681
-        with:
-          images: |
-            ghcr.io/amphineko/unbound
-          tags: |
-            type=schedule
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha
             
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+      
+      # collector
+      
+      - name: Docker Metadata
+        id: meta_collector
+        uses: docker/metadata-action@e5622373a38e60fb6d795a4421e56882f2d7a681
+        with:
+          images: |
+            ghcr.io/amphineko/vmware-powercli-telegraf
+          flavor: |
+            latest=auto
+            prefix=collector
+          tags: |
+            type=sha
 
       - name: "Docker Build and Push: collector"
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           file: "./docker/Dockerfile.collector"
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta_collector.outputs.tags }}
+          labels: ${{ steps.meta_collector.outputs.labels }}
+          
+      # telegraf
+          
+      - name: Docker Metadata
+        id: meta_telegraf
+        uses: docker/metadata-action@e5622373a38e60fb6d795a4421e56882f2d7a681
+        with:
+          images: |
+            ghcr.io/amphineko/vmware-powercli-telegraf
+          flavor: |
+            latest=auto
+            prefix=telegraf
+          tags: |
+            type=sha
           
       - name: "Docker Build and Push: telegraf"
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           file: "./docker/Dockerfile.telegraf"
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta_telegraf.outputs.tags }}
+          labels: ${{ steps.meta_telegraf.outputs.labels }}
