@@ -1,0 +1,22 @@
+FROM mcr.microsoft.com/powershell:lts-7.2-alpine-3.14
+
+ARG POWERCLI_URL=https://vdc-download.vmware.com/vmwb-repository/dcr-public/2142f98d-f49c-4972-8f73-c2697aa744cd/37af7f1b-e6d5-47ac-9daf-7eecf86358f1/VMware-PowerCLI-13.1.0-21624340.zip
+ARG POWERCLI_CHKSUM=4e5c6f443dd2f130b7d29ed4fc12e70f
+
+RUN set -ex \
+    && wget -O /tmp/powercli.zip $POWERCLI_URL \
+    && echo "$POWERCLI_CHKSUM  /tmp/powercli.zip" | md5sum -c -
+
+RUN set -ex \
+    && export PS_MODULE_PATH=$(pwsh -c 'echo ($env:PSModulePath -split ":")[0]') \
+    && echo "PS_MODULE_PATH=$PS_MODULE_PATH" \
+    && unzip -d $PS_MODULE_PATH /tmp/powercli.zip
+
+SHELL [ "/usr/bin/pwsh", "-c" ]
+
+RUN Set-PowerCLIConfiguration -Scope AllUsers -ParticipateInCEIP $false -Confirm:$false
+
+COPY ./collect.ps1 /collect.ps1
+RUN chmod +x /collect.ps1
+
+CMD [ "/usr/bin/pwsh", "-c", "/collect.ps1" ]

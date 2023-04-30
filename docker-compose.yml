@@ -1,0 +1,42 @@
+version: "3"
+
+services:
+  telegraf:
+    container_name: telegraf
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.telegraf
+    depends_on:
+      - influxdb
+    environment:
+      INFLUXDB_URL: "http://influxdb:8086/"
+      INFLUXDB_ORG: "inframon"
+      INFLUXDB_TOKEN: "touwuken"
+    expose:
+      - 3000/tcp
+    volumes:
+      - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    restart: unless-stopped
+
+  collector:
+    container_name: collector
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.collector
+    depends_on:
+      - telegraf
+    environment:
+      INFLUXDB_LISTENER: "http://telegraf:3000/api/v2/write"
+      INFLUXDB_NVME_BUCKET: "vmware_nvme"
+      INFLUXDB_STORAGE_DEVICE_BUCKET: "vmware_storage_devices"
+      INTERVAL_SECONDS: 300
+      VCENTER_PASSWORD: "password"
+      VCENTER_USER: "svc-inframon@vcenter.example.com"
+      VCENTER: "vcenter.example.com"
+    restart: unless-stopped
+
+  influxdb:
+    container_name: influxdb
+    image: docker.io/library/influxdb:2.7-alpine
+    ports:
+      - 0.0.0.0:8086:8086
